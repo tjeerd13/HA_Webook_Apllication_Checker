@@ -35,7 +35,6 @@ blueprint:
         icon: mdi:crosshairs-gps
 
 domain: automation
-
 input:
   webhook_id:
     name: Webhook ID
