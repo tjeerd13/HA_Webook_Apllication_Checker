@@ -1,12 +1,9 @@
 blueprint:
-  name: Applicatie status en notificatie (1.0)
+  name: Applicatie status en notificatie (1.1)
   description: >
-    Combineert webhook verwerking met statusupdates en notificaties bij uitval.
-    - Controleert elke 5 minuten of laatste update ouder is dan ingestelde drempel.
-    - Stuurt persistent notificatie bij uitval en herstelmelding bij reconnectie.
-    - Ondersteunt meerdere applicaties via een selecteerbare applicatie-ID.
+    Automatiseert statusverwerking van een applicatie via webhook en stuurt notificaties bij uitval of herstel.
 
-    ✅ Vereist onderstaande helpers per applicatie-ID (bijv. "gps_log", "sensorhub"):
+    ✅ Vereist onderstaande helpers per applicatie-ID (bijv. "gps_log"):
 
     input_datetime:
       <<application>>_last_update:
@@ -37,9 +34,6 @@ blueprint:
         step: 1
         icon: mdi:crosshairs-gps
 
-    - Controleert elke 5 minuten of laatste update ouder is dan ingestelde drempel.
-    - Stuurt persistent notificatie bij uitval en herstelmelding bij reconnectie.
-    - Ondersteunt meerdere applicaties via een selecteerbare applicatie-ID.
   domain: automation
   input:
     webhook_id:
@@ -122,9 +116,6 @@ action:
             data:
               entity_id: "{{ count_total_entity }}"
               value: "{{ trigger.json.message_count_total }}"
-          - condition: state
-            entity_id: "persistent_notification.{{ notification_id }}"
-            state: "notifying"
           - service: persistent_notification.dismiss
             data:
               notification_id: "{{ notification_id }}"
@@ -144,7 +135,8 @@ action:
                  (now() - last_update | as_datetime).total_seconds() > threshold * 60 }}
           - condition: template
             value_template: >
-              {% set last_notif = state_attr('persistent_notification.' ~ notification_id, 'created_at') %}
+              {% set notif = 'persistent_notification.' ~ notification_id %}
+              {% set last_notif = state_attr(notif, 'created_at') %}
               {{ last_notif is none or
                  (now() - last_notif | as_datetime).total_seconds() > cooldown }}
           - service: persistent_notification.create
