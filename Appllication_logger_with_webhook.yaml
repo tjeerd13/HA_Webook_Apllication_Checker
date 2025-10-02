@@ -92,6 +92,7 @@ variables:
 
 condition: []
 
+
 action:
   - choose:
       - conditions: "{{ trigger.platform == 'webhook' }}"
@@ -116,13 +117,16 @@ action:
             data:
               entity_id: "{{ count_total_entity }}"
               value: "{{ trigger.json.message_count_total }}"
-          - service: persistent_notification.dismiss
-            data:
-              notification_id: "{{ notification_id }}"
-          - service: notify.{{ notify_service }}
-            data:
-              title: "✅ {{ app_id }}"
-              message: "Verbinding hersteld: laatste update ontvangen."
+          - choose:
+              - conditions: "{{ states('persistent_notification.' ~ notification_id) != 'unknown' }}"
+                sequence:
+                  - service: persistent_notification.dismiss
+                    data:
+                      notification_id: "{{ notification_id }}"
+                  - service: notify.{{ notify_service }}
+                    data:
+                      title: "✅ {{ app_id }}"
+                      message: "Verbinding hersteld: laatste update ontvangen."
 
       - conditions: "{{ trigger.platform == 'time_pattern' }}"
         sequence:
