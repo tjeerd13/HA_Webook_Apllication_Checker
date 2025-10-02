@@ -23,7 +23,7 @@ blueprint:
       <<application>>_message_count_24h:
         name: <<application>> berichten laatste 24 uur
         min: 0
-        max: 10000A
+        max: 10000
         step: 1
         icon: mdi:crosshairs-gps
 
@@ -123,7 +123,6 @@ action:
             data:
               title: "✅ {{ app_id }}"
               message: "Verbinding hersteld: laatste update ontvangen."
-
 
       - conditions: "{{ trigger.platform == 'time_pattern' }}"
         sequence:
