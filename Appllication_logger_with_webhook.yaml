@@ -34,7 +34,7 @@ blueprint:
         step: 1
         icon: mdi:crosshairs-gps
 
-domain: automation
+  domain: automation
 input:
   webhook_id:
     name: Webhook ID
