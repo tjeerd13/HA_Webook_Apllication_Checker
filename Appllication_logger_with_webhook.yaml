@@ -1,0 +1,157 @@
+blueprint:
+  name: Applicatie status en notificatie
+  description: >
+    Combineert webhook verwerking met statusupdates en notificaties bij uitval.
+
+    ✅ Vereist onderstaande helpers per applicatie-ID (bijv. "gps_log", "sensorhub"):
+
+    input_datetime:
+      <<application>>_last_update:
+        name: Laatste <<application>> update
+        has_date: true
+        has_time: true
+        icon: mdi:crosshairs-gps
+
+    input_number:
+      <<application>>_message_count_5min:
+        name: <<application>> berichten laatste 5 minuten
+        min: 0
+        max: 10000
+        step: 1
+        icon: mdi:crosshairs-gps
+
+      <<application>>_message_count_24h:
+        name: <<application>> berichten laatste 24 uur
+        min: 0
+        max: 10000
+        step: 1
+        icon: mdi:crosshairs-gps
+
+      <<application>>_message_count_total:
+        name: <<application>> totaal aantal berichten
+        min: 0
+        max: 100000
+        step: 1
+        icon: mdi:crosshairs-gps
+
+    - Controleert elke 5 minuten of laatste update ouder is dan ingestelde drempel.
+    - Stuurt persistent notificatie bij uitval en herstelmelding bij reconnectie.
+    - Ondersteunt meerdere applicaties via een selecteerbare applicatie-ID.
+  domain: automation
+  input:
+    webhook_id:
+      name: Webhook ID
+      description: ID van de webhook die door het script wordt aangeroepen.
+      selector:
+        text:
+    application_id:
+      name: Applicatie ID
+      description: Unieke naam of ID van de applicatie (bijv. "gps_log", "sensorhub").
+      selector:
+        text:
+    notify_device:
+      name: Notificatie apparaat
+      description: Mobiel apparaat voor pushmeldingen.
+      selector:
+        device:
+          integration: mobile_app
+    cooldown:
+      name: Cooldown (seconden)
+      description: Minimale tijd tussen meldingen bij uitval.
+      default: 3600
+      selector:
+        number:
+          min: 60
+          max: 86400
+          unit_of_measurement: seconds
+    threshold_minutes:
+      name: Drempel (minuten)
+      description: Tijd zonder update waarna een waarschuwing wordt gestuurd.
+      default: 10
+      selector:
+        number:
+          min: 1
+          max: 120
+          unit_of_measurement: minutes
+
+trigger:
+  - platform: webhook
+    webhook_id: !input webhook_id
+    allowed_methods:
+      - POST
+    local_only: true
+  - platform: time_pattern
+    minutes: "/5"
+
+variables:
+  cooldown: !input cooldown
+  threshold: !input threshold_minutes
+  app_id: !input application_id
+  last_update_entity: "input_datetime.{{ app_id }}_last_update"
+  count_5min_entity: "input_number.{{ app_id }}_message_count_5min"
+  count_24h_entity: "input_number.{{ app_id }}_message_count_24h"
+  count_total_entity: "input_number.{{ app_id }}_message_count_total"
+  notification_id: "{{ app_id }}_warning"
+
+condition: []
+
+action:
+  - choose:
+      - conditions: "{{ trigger.platform == 'webhook' }}"
+        sequence:
+          - choose:
+              - conditions: "{{ trigger.json.timestamp is defined }}"
+                sequence:
+                  - service: input_datetime.set_datetime
+                    target:
+                      entity_id: "{{ last_update_entity }}"
+                    data:
+                      datetime: "{{ trigger.json.timestamp }}"
+          - service: input_number.set_value
+            data:
+              entity_id: "{{ count_5min_entity }}"
+              value: "{{ trigger.json.message_count_last_5min }}"
+          - service: input_number.set_value
+            data:
+              entity_id: "{{ count_24h_entity }}"
+              value: "{{ trigger.json.message_count_last_24h }}"
+          - service: input_number.set_value
+            data:
+              entity_id: "{{ count_total_entity }}"
+              value: "{{ trigger.json.message_count_total }}"
+          - condition: state
+            entity_id: "persistent_notification.{{ notification_id }}"
+            state: "notifying"
+          - service: persistent_notification.dismiss
+            data:
+              notification_id: "{{ notification_id }}"
+          - service: notify.mobile_app_notify
+            data:
+              title: "✅ {{ app_id }}"
+              message: "Verbinding hersteld: laatste update ontvangen."
+            target:
+              device_id: !input notify_device
+
+      - conditions: "{{ trigger.platform == 'time_pattern' }}"
+        sequence:
+          - condition: template
+            value_template: >
+              {% set last_update = states(last_update_entity) %}
+              {{ last_update != 'unknown' and
+                 (now() - last_update | as_datetime).total_seconds() > threshold * 60 }}
+          - condition: template
+            value_template: >
+              {% set last_notif = state_attr('persistent_notification.' ~ notification_id, 'created_at') %}
+              {{ last_notif is none or
+                 (now() - last_notif | as_datetime).total_seconds() > cooldown }}
+          - service: persistent_notification.create
+            data:
+              title: "⚠️ {{ app_id }}"
+              message: "Geen update ontvangen sinds {{ states(last_update_entity) }}."
+              notification_id: "{{ notification_id }}"
+          - service: notify.mobile_app_notify
+            data:
+              title: "⚠️ {{ app_id }}"
+              message: "Geen update ontvangen sinds {{ states(last_update_entity) }}."
+            target:
+              device_id: !input notify_device

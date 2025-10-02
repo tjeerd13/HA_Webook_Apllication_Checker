@@ -1,0 +1,28 @@
+input_datetime:
+  gps_log_last_update:
+    name: Laatste gps_log update
+    has_date: true
+    has_time: true
+    icon: mdi:crosshairs-gps
+
+input_number:
+  gps_log_message_count_5min:
+    name: gps_log berichten laatste 5 minuten
+    min: 0
+    max: 10000
+    step: 1
+    icon: mdi:crosshairs-gps
+
+  gps_log_message_count_24h:
+    name: gps_log berichten laatste 24 uur
+    min: 0
+    max: 10000
+    step: 1
+    icon: mdi:crosshairs-gps
+
+  gps_log_message_count_total:
+    name: gps_log totaal aantal berichten
+    min: 0
+    max: 100000
+    step: 1
+    icon: mdi:crosshairs-gps
