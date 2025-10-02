@@ -1,81 +1,49 @@
 blueprint:
-  name: Applicatie status en notificatie (1.5)
+  name: Applicatie status en notificatie (1.6)
   description: >
     Automatiseert statusverwerking van een applicatie via webhook en voert acties uit bij uitval of herstel.
-    ✅ Vereist onderstaande helpers per applicatie-ID (bijv. "gps_log").
+    ✅ Vereist helpers per applicatie-ID (bijv. "gps_log").
     ✅ Je kunt zelf acties opgeven bij herstel en/of uitval (lamp aan, TTS, Telegram, etc.).
 
-    input_datetime:
-      <<application>>_last_update:
-        name: Laatste <<application>> update
-        has_date: true
-        has_time: true
-        icon: mdi:crosshairs-gps
+domain: automation
 
-    input_number:
-      <<application>>_message_count_5min:
-        name: <<application>> berichten laatste 5 minuten
-        min: 0
-        max: 10000
-        step: 1
-        icon: mdi:crosshairs-gps
-
-      <<application>>_message_count_24h:
-        name: <<application>> berichten laatste 24 uur
-        min: 0
-        max: 10000
-        step: 1
-        icon: mdi:crosshairs-gps
-
-      <<application>>_message_count_total:
-        name: <<application>> totaal aantal berichten
-        min: 0
-        max: 100000
-        step: 1
-        icon: mdi:crosshairs-gps
-
-  domain: automation
-  input:
-    webhook_id:
-      name: Webhook ID
-      description: ID van de webhook die door het script wordt aangeroepen.
-      selector:
-        text:
-    application_id:
-      name: Applicatie ID
-      description: Unieke naam of ID van de applicatie (bijv. "gps_log", "sensorhub").
-      selector:
-        text:
-    cooldown:
-      name: Cooldown (seconden)
-      description: Minimale tijd tussen meldingen bij uitval.
-      default: 3600
-      selector:
-        number:
-          min: 60
-          max: 86400
-          unit_of_measurement: seconds
-    threshold_minutes:
-      name: Drempel (minuten)
-      description: Tijd zonder update waarna een waarschuwing wordt gestuurd.
-      default: 10
-      selector:
-        number:
-          min: 1
-          max: 120
-          unit_of_measurement: minutes
-    action_on_restore:
-      name: Actie bij herstel
-      description: Actie(s) die worden uitgevoerd als de verbinding hersteld is.
-      default: []
-      selector:
-        action:
-    action_on_failure:
-      name: Actie bij uitval
-      description: Actie(s) die worden uitgevoerd als er geen update is ontvangen binnen de drempel.
-      default: []
-      selector:
-        action:
+input:
+  webhook_id:
+    name: Webhook ID
+    selector:
+      text:
+  application_id:
+    name: Applicatie ID
+    selector:
+      text:
+  cooldown:
+    name: Cooldown (seconden)
+    default: 3600
+    selector:
+      number:
+        min: 60
+        max: 86400
+        unit_of_measurement: seconds
+  threshold_minutes:
+    name: Drempel (minuten)
+    default: 10
+    selector:
+      number:
+        min: 1
+        max: 120
+        unit_of_measurement: minutes
+  action_on_restore:
+    name: Actie bij herstel
+    description: Actie(s) die worden uitgevoerd als de verbinding hersteld is.
+    default: []
+    selector:
+      action:
+  action_on_failure:
+    name: Actie bij uitval
+    description: Actie(s) die worden uitgevoerd als er geen update is ontvangen binnen de drempel.
+    default: []
+    selector:
+      action:
 
 trigger:
   - platform: webhook
@@ -95,6 +63,8 @@ variables:
   count_24h_entity: "input_number.{{ app_id }}_message_count_24h"
   count_total_entity: "input_number.{{ app_id }}_message_count_total"
   notification_id: "{{ app_id }}_warning"
+  action_on_restore: !input action_on_restore
+  action_on_failure: !input action_on_failure
 
 condition: []
 
@@ -129,7 +99,7 @@ action:
                     data:
                       notification_id: "{{ notification_id }}"
                   - choose:
-                      - conditions: []
+                      - conditions: "{{ action_on_restore | length > 0 }}"
                         sequence: !input action_on_restore
 
       - conditions: "{{ trigger.platform == 'time_pattern' }}"
@@ -151,4 +121,5 @@ action:
               message: "Geen update ontvangen sinds {{ states(last_update_entity) }}."
               notification_id: "{{ notification_id }}"
           - choose:
-              - conditions: []
+              - conditions: "{{ action_on_failure | length > 0 }}"
+                sequence: !input action_on_failure
