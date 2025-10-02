@@ -35,47 +35,47 @@ blueprint:
         icon: mdi:crosshairs-gps
 
   domain: automation
-input:
-  webhook_id:
-    name: Webhook ID
-    description: ID van de webhook die door het script wordt aangeroepen.
-    selector:
-      text:
-  application_id:
-    name: Applicatie ID
-    description: Unieke naam of ID van de applicatie (bijv. "gps_log", "sensorhub").
-    selector:
-      text:
-  cooldown:
-    name: Cooldown (seconden)
-    description: Minimale tijd tussen meldingen bij uitval.
-    default: 3600
-    selector:
-      number:
-        min: 60
-        max: 86400
-        unit_of_measurement: seconds
-  threshold_minutes:
-    name: Drempel (minuten)
-    description: Tijd zonder update waarna een waarschuwing wordt gestuurd.
-    default: 10
-    selector:
-      number:
-        min: 1
-        max: 120
-        unit_of_measurement: minutes
-  action_on_restore:
-    name: Actie bij herstel
-    description: Actie(s) die worden uitgevoerd als de verbinding hersteld is.
-    default: []
-    selector:
-      action:
-  action_on_failure:
-    name: Actie bij uitval
-    description: Actie(s) die worden uitgevoerd als er geen update is ontvangen binnen de drempel.
-    default: []
-    selector:
-      action:
+  input:
+    webhook_id:
+      name: Webhook ID
+      description: ID van de webhook die door het script wordt aangeroepen.
+      selector:
+        text:
+    application_id:
+      name: Applicatie ID
+      description: Unieke naam of ID van de applicatie (bijv. "gps_log", "sensorhub").
+      selector:
+        text:
+    cooldown:
+      name: Cooldown (seconden)
+      description: Minimale tijd tussen meldingen bij uitval.
+      default: 3600
+      selector:
+        number:
+          min: 60
+          max: 86400
+          unit_of_measurement: seconds
+    threshold_minutes:
+      name: Drempel (minuten)
+      description: Tijd zonder update waarna een waarschuwing wordt gestuurd.
+      default: 10
+      selector:
+        number:
+          min: 1
+          max: 120
+          unit_of_measurement: minutes
+    action_on_restore:
+      name: Actie bij herstel
+      description: Actie(s) die worden uitgevoerd als de verbinding hersteld is.
+      default: []
+      selector:
+        action:
+    action_on_failure:
+      name: Actie bij uitval
+      description: Actie(s) die worden uitgevoerd als er geen update is ontvangen binnen de drempel.
+      default: []
+      selector:
+        action:
 
 trigger:
   - platform: webhook
