@@ -2,8 +2,37 @@ blueprint:
   name: Applicatie status en notificatie (1.4)
   description: >
     Automatiseert statusverwerking van een applicatie via webhook en voert acties uit bij uitval of herstel.
-    ✅ Vereist helpers per applicatie-ID (bijv. "gps_log").
+    ✅ Vereist onderstaande helpers per applicatie-ID (bijv. "gps_log").
     ✅ Je kunt zelf acties opgeven bij herstel en/of uitval (lamp aan, TTS, Telegram, etc.).
+
+    input_datetime:
+      <<application>>_last_update:
+        name: Laatste <<application>> update
+        has_date: true
+        has_time: true
+        icon: mdi:crosshairs-gps
+
+    input_number:
+      <<application>>_message_count_5min:
+        name: <<application>> berichten laatste 5 minuten
+        min: 0
+        max: 10000
+        step: 1
+        icon: mdi:crosshairs-gps
+
+      <<application>>_message_count_24h:
+        name: <<application>> berichten laatste 24 uur
+        min: 0
+        max: 10000
+        step: 1
+        icon: mdi:crosshairs-gps
+
+      <<application>>_message_count_total:
+        name: <<application>> totaal aantal berichten
+        min: 0
+        max: 100000
+        step: 1
+        icon: mdi:crosshairs-gps
 
 domain: automation
 
@@ -63,8 +92,6 @@ variables:
   count_24h_entity: "input_number.{{ app_id }}_message_count_24h"
   count_total_entity: "input_number.{{ app_id }}_message_count_total"
   notification_id: "{{ app_id }}_warning"
-  action_on_restore: !input action_on_restore
-  action_on_failure: !input action_on_failure
 
 condition: []
 
