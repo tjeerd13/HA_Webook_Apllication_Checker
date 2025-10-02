@@ -1,7 +1,10 @@
 blueprint:
-  name: Applicatie status en notificatie
+  name: Applicatie status en notificatie (1.0)
   description: >
     Combineert webhook verwerking met statusupdates en notificaties bij uitval.
+    - Controleert elke 5 minuten of laatste update ouder is dan ingestelde drempel.
+    - Stuurt persistent notificatie bij uitval en herstelmelding bij reconnectie.
+    - Ondersteunt meerdere applicaties via een selecteerbare applicatie-ID.
 
     ✅ Vereist onderstaande helpers per applicatie-ID (bijv. "gps_log", "sensorhub"):
 
