@@ -7,6 +7,32 @@ blueprint:
 
 domain: automation
 
+<<<<<<< HEAD
+=======
+    input_number:
+      <<application>>_message_count_5min:
+        name: <<application>> berichten laatste 5 minuten
+        min: 0
+        max: 10000
+        step: 1
+        icon: mdi:crosshairs-gps
+
+      <<application>>_message_count_24h:
+        name: <<application>> berichten laatste 24 uur
+        min: 0
+        max: 10000
+        step: 1
+        icon: mdi:crosshairs-gps
+
+      <<application>>_message_count_total:
+        name: <<application>> totaal aantal berichten
+        min: 0
+        max: 100000
+        step: 1
+        icon: mdi:crosshairs-gps
+
+domain: automation
+>>>>>>> parent of 19f4511 (Update Appllication_logger_with_webhook.yaml)
 input:
   webhook_id:
     name: Webhook ID
