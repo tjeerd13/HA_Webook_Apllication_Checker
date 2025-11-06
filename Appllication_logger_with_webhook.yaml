@@ -1,5 +1,5 @@
 blueprint:
-  name: Applicatie status en notificatie (1.5.0)
+  name: Applicatie status en notificatie (1.5.1)
   description: >
     Automatiseert statusverwerking van een applicatie via webhook en voert acties uit bij uitval of herstel.
     ✅ Vereist onderstaande helpers per applicatie-ID (bijv. "gps_log").
@@ -96,53 +96,46 @@ variables:
 condition: []
 
 action:
-  - condition: template
-    value_template: >
-      {{ input.application_id is defined and input.application_id|length > 0 }}
-  - service: persistent_notification.create
-    if: "{{ not (input.application_id is defined and input.application_id|length > 0) }}"
-    data:
-      title: "❌ Configuration Error"
-      message: "Applicatie ID is niet ingesteld"
-      notification_id: "config_error"
   - choose:
-      - conditions: "{{ trigger.platform == 'webhook' }}"
+      - conditions: "{{ not (input.application_id is defined and input.application_id|length > 0) }}"
+        sequence:
+          - service: persistent_notification.create
+            data:
+              title: "❌ Configuration Error"
+              message: "Applicatie ID is niet ingesteld"
+              notification_id: "config_error"
+      
+      - conditions: "{{ trigger.platform == 'webhook' and trigger.json.source is defined and trigger.json.source == app_id }}"
         sequence:
           - choose:
-              - conditions: >
-                  {{ trigger.platform == 'webhook' 
-                     and trigger.json.source is defined 
-                     and trigger.json.source == app_id }}
+              - conditions: "{{ trigger.json.timestamp is defined }}"
                 sequence:
+                  - service: input_datetime.set_datetime
+                    target:
+                      entity_id: "{{ last_update_entity }}"
+                    data:
+                      datetime: "{{ trigger.json.timestamp }}"
+          - service: input_number.set_value
+            data:
+              entity_id: "{{ count_1h_entity }}"
+              value: "{{ trigger.json.message_count_last_1h | float(0) }}"
+          - service: input_number.set_value
+            data:
+              entity_id: "{{ count_24h_entity }}"
+              value: "{{ trigger.json.message_count_last_24h | float(0) }}"
+          - service: input_number.set_value
+            data:
+              entity_id: "{{ count_total_entity }}"
+              value: "{{ trigger.json.message_count_total | float(0) }}"
+          - choose:
+              - conditions: "{{ states('persistent_notification.' ~ notification_id) != 'unknown' }}"
+                sequence:
+                  - service: persistent_notification.dismiss
+                    data:
+                      notification_id: "{{ notification_id }}"
                   - choose:
-                      - conditions: "{{ trigger.json.timestamp is defined }}"
-                        sequence:
-                          - service: input_datetime.set_datetime
-                            target:
-                              entity_id: "{{ last_update_entity }}"
-                            data:
-                              datetime: "{{ trigger.json.timestamp }}"
-                  - service: input_number.set_value
-                    data:
-                      entity_id: "{{ count_1h_entity }}"
-                      value: "{{ trigger.json.message_count_last_1h | float(0) }}"
-                  - service: input_number.set_value
-                    data:
-                      entity_id: "{{ count_24h_entity }}"
-                      value: "{{ trigger.json.message_count_last_24h | float(0) }}"
-                  - service: input_number.set_value
-                    data:
-                      entity_id: "{{ count_total_entity }}"
-                      value: "{{ trigger.json.message_count_total | float(0) }}"
-                  - choose:
-                      - conditions: "{{ states('persistent_notification.' ~ notification_id) != 'unknown' }}"
-                        sequence:
-                          - service: persistent_notification.dismiss
-                            data:
-                              notification_id: "{{ notification_id }}"
-                          - choose:
-                              - conditions: "{{ action_on_restore | length > 0 }}"
-                                sequence: !input action_on_restore
+                      - conditions: "{{ action_on_restore | length > 0 }}"
+                        sequence: !input action_on_restore
 
       - conditions: "{{ trigger.platform == 'time_pattern' }}"
         sequence:
