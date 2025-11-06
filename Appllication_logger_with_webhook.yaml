@@ -19,7 +19,6 @@ blueprint:
         max: 10000
         step: 1
         icon: "mdi:crosshairs-gps"
-        value: "{{ trigger.json.message_count_last_1h | float(0) }}"
 
       <<application>>_message_count_24h:
         name: <<application>> berichten laatste 24 uur
@@ -27,7 +26,6 @@ blueprint:
         max: 10000
         step: 1
         icon: "mdi:crosshairs-gps"
-        value: "{{ trigger.json.message_count_last_24h | float(0) }}"
 
       <<application>>_message_count_total:
         name: <<application>> totaal aantal berichten
@@ -35,7 +33,6 @@ blueprint:
         max: 10000000
         step: 1
         icon: "mdi:crosshairs-gps"
-        value: "{{ trigger.json.message_count_total | float(0) }}"
 
   domain: automation
 
@@ -50,7 +47,7 @@ blueprint:
         text:
     cooldown:
       name: Cooldown (seconden)
-      default: 3600
+      default: 4200
       selector:
         number:
           min: 60
@@ -82,7 +79,7 @@ trigger:
     webhook_id: !input webhook_id
     allowed_methods:
       - POST
-    local_only: true
+    local_only: false
   - platform: time_pattern
     minutes: "/5"
 
@@ -99,38 +96,53 @@ variables:
 condition: []
 
 action:
+  - condition: template
+    value_template: >
+      {{ input.application_id is defined and input.application_id|length > 0 }}
+  - service: persistent_notification.create
+    if: "{{ not (input.application_id is defined and input.application_id|length > 0) }}"
+    data:
+      title: "❌ Configuration Error"
+      message: "Applicatie ID is niet ingesteld"
+      notification_id: "config_error"
   - choose:
       - conditions: "{{ trigger.platform == 'webhook' }}"
         sequence:
           - choose:
-              - conditions: "{{ trigger.json.timestamp is defined }}"
+              - conditions: >
+                  {{ trigger.platform == 'webhook' 
+                     and trigger.json.source is defined 
+                     and trigger.json.source == app_id }}
                 sequence:
-                  - service: input_datetime.set_datetime
-                    target:
-                      entity_id: "{{ last_update_entity }}"
-                    data:
-                      datetime: "{{ trigger.json.timestamp }}"
-          - service: input_number.set_value
-            data:
-              entity_id: "{{ count_1h_entity }}"
-              value: "{{ trigger.json.message_count_last_1h | float(0) }}"
-          - service: input_number.set_value
-            data:
-              entity_id: "{{ count_24h_entity }}"
-              value: "{{ trigger.json.message_count_last_24h | float(0) }}"
-          - service: input_number.set_value
-            data:
-              entity_id: "{{ count_total_entity }}"
-              value: "{{ trigger.json.message_count_total | float(0) }}"
-          - choose:
-              - conditions: "{{ states('persistent_notification.' ~ notification_id) != 'unknown' }}"
-                sequence:
-                  - service: persistent_notification.dismiss
-                    data:
-                      notification_id: "{{ notification_id }}"
                   - choose:
-                      - conditions: "{{ action_on_restore | length > 0 }}"
-                        sequence: !input action_on_restore
+                      - conditions: "{{ trigger.json.timestamp is defined }}"
+                        sequence:
+                          - service: input_datetime.set_datetime
+                            target:
+                              entity_id: "{{ last_update_entity }}"
+                            data:
+                              datetime: "{{ trigger.json.timestamp }}"
+                  - service: input_number.set_value
+                    data:
+                      entity_id: "{{ count_1h_entity }}"
+                      value: "{{ trigger.json.message_count_last_1h | float(0) }}"
+                  - service: input_number.set_value
+                    data:
+                      entity_id: "{{ count_24h_entity }}"
+                      value: "{{ trigger.json.message_count_last_24h | float(0) }}"
+                  - service: input_number.set_value
+                    data:
+                      entity_id: "{{ count_total_entity }}"
+                      value: "{{ trigger.json.message_count_total | float(0) }}"
+                  - choose:
+                      - conditions: "{{ states('persistent_notification.' ~ notification_id) != 'unknown' }}"
+                        sequence:
+                          - service: persistent_notification.dismiss
+                            data:
+                              notification_id: "{{ notification_id }}"
+                          - choose:
+                              - conditions: "{{ action_on_restore | length > 0 }}"
+                                sequence: !input action_on_restore
 
       - conditions: "{{ trigger.platform == 'time_pattern' }}"
         sequence:
