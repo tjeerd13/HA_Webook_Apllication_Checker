@@ -1,5 +1,5 @@
 blueprint:
-  name: Applicatie status en notificatie (1.4.2)
+  name: Applicatie status en notificatie (1.4.3)
   description: >
     Automatiseert statusverwerking van een applicatie via webhook en voert acties uit bij uitval of herstel.
     ✅ Vereist onderstaande helpers per applicatie-ID (bijv. "gps_log").
@@ -10,7 +10,7 @@ blueprint:
         name: Laatste <<application>> update
         has_date: true
         has_time: true
-        icon: mdi:crosshairs-gps
+        icon: "mdi:crosshairs-gps"
 
     input_number:
       <<application>>_message_count_1h:
@@ -18,21 +18,21 @@ blueprint:
         min: 0
         max: 10000
         step: 1
-        icon: mdi:crosshairs-gps
+        icon: "mdi:crosshairs-gps"
 
       <<application>>_message_count_24h:
         name: <<application>> berichten laatste 24 uur
         min: 0
         max: 10000
         step: 1
-        icon: mdi:crosshairs-gps
+        icon: "mdi:crosshairs-gps"
 
       <<application>>_message_count_total:
         name: <<application>> totaal aantal berichten
         min: 0
         max: 10000000
         step: 1
-        icon: mdi:crosshairs-gps
+        icon: "mdi:crosshairs-gps"
 
   domain: automation
 
