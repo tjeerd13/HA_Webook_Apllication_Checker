@@ -19,6 +19,7 @@ blueprint:
         max: 10000
         step: 1
         icon: "mdi:crosshairs-gps"
+        value: "{{ trigger.json.message_count_last_1h | float(0) }}"
 
       <<application>>_message_count_24h:
         name: <<application>> berichten laatste 24 uur
@@ -26,6 +27,7 @@ blueprint:
         max: 10000
         step: 1
         icon: "mdi:crosshairs-gps"
+        value: "{{ trigger.json.message_count_last_24h | float(0) }}"
 
       <<application>>_message_count_total:
         name: <<application>> totaal aantal berichten
@@ -33,6 +35,7 @@ blueprint:
         max: 10000000
         step: 1
         icon: "mdi:crosshairs-gps"
+        value: "{{ trigger.json.message_count_total | float(0) }}"
 
   domain: automation
 
@@ -110,15 +113,15 @@ action:
           - service: input_number.set_value
             data:
               entity_id: "{{ count_1h_entity }}"
-              value: {{ trigger.json.message_count_last_1h | float(0) }}
+              value: "{{ trigger.json.message_count_last_1h | float(0) }}"
           - service: input_number.set_value
             data:
               entity_id: "{{ count_24h_entity }}"
-              value: {{ trigger.json.message_count_last_24h | float(0) }}
+              value: "{{ trigger.json.message_count_last_24h | float(0) }}"
           - service: input_number.set_value
             data:
               entity_id: "{{ count_total_entity }}"
-              value: {{ trigger.json.message_count_total | float(0) }}
+              value: "{{ trigger.json.message_count_total | float(0) }}"
           - choose:
               - conditions: "{{ states('persistent_notification.' ~ notification_id) != 'unknown' }}"
                 sequence:
