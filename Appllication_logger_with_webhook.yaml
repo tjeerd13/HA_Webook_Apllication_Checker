@@ -110,15 +110,15 @@ action:
           - service: input_number.set_value
             data:
               entity_id: "{{ count_1h_entity }}"
-              value: "{{ trigger.json.message_count_last_1h }}"
+              value: {{ trigger.json.message_count_last_1h | float(0) }}
           - service: input_number.set_value
             data:
               entity_id: "{{ count_24h_entity }}"
-              value: "{{ trigger.json.message_count_last_24h }}"
+              value: {{ trigger.json.message_count_last_24h | float(0) }}
           - service: input_number.set_value
             data:
               entity_id: "{{ count_total_entity }}"
-              value: "{{ trigger.json.message_count_total }}"
+              value: {{ trigger.json.message_count_total | float(0) }}
           - choose:
               - conditions: "{{ states('persistent_notification.' ~ notification_id) != 'unknown' }}"
                 sequence:
@@ -134,14 +134,12 @@ action:
           - condition: template
             value_template: >
               {% set last_update = states(last_update_entity) %}
-              {{ last_update != 'unknown' and
-                 (now() - last_update | as_datetime).total_seconds() > threshold * 60 }}
+              {{ last_update != 'unknown' and (as_timestamp(now()) - as_timestamp(last_update)) > threshold * 60 }}
           - condition: template
             value_template: >
               {% set notif = 'persistent_notification.' ~ notification_id %}
               {% set last_notif = state_attr(notif, 'created_at') %}
-              {{ last_notif is none or
-                 (now() - last_notif | as_datetime).total_seconds() > cooldown }}
+              {{ last_notif is none or (as_timestamp(now()) - as_timestamp(last_notif)) > cooldown }}
           - service: persistent_notification.create
             data:
               title: "⚠️ {{ app_id }}"
