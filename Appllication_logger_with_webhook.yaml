@@ -1,5 +1,5 @@
 blueprint:
-  name: Applicatie status en notificatie (1.5.1)
+  name: Applicatie status en notificatie (1.5.2)
   description: >
     Automatiseert statusverwerking van een applicatie via webhook en voert acties uit bij uitval of herstel.
     ✅ Vereist onderstaande helpers per applicatie-ID (bijv. "gps_log").
