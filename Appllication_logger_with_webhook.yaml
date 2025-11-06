@@ -30,7 +30,7 @@ blueprint:
       <<application>>_message_count_total:
         name: <<application>> totaal aantal berichten
         min: 0
-        max: 100000
+        max: 10000000
         step: 1
         icon: mdi:crosshairs-gps
 
